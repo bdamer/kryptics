@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Kryptics</title>
+    </head>
+    <body>
+        <canvas id="grid" width="32" height="32"></canvas>
+        <div id="inputs">
+        </div>
+		<div id="actions">
+            <h3>Settings</h3>
+            <label for="grid_size">Grid size <input id="grid_size" type="text" value="10" /></label>
+            <input id="reset" type="button" value="Reset" /><br />
+            <label for="grid_symmetry"><input id="grid_symmetry" type="checkbox" />Symmetrical?</label><br />
+            <label for="auto_move"><input id="auto_move" type="checkbox" />Automatically move to next cell?</label>
+		</div>
+		
+        <div id="notes">
+            <h3>Notes</h3>
+            <ul>
+                <li>Left-click selects a cell</li>
+                <li>Typing a letter will update the selected cell</li>
+                <li>Right-click or SPACE toggles block</li>
+                <li>ARROW keys to navigate</li>
+                <li>DEL or BACKSPACE to delete</li>
+            </ul>
+
+        </div>
+
+        <script src="./dist/bundle.js"></script>
+    </body>
+</html>
