@@ -2,13 +2,12 @@ import { Dict } from "./dictionary";
 import { Grid, Cell } from "./grid";
 import { Renderer } from "./renderer"; 
 import { clickPos } from "./util";
-import wordlist from './wordlist.txt';
 
 const canvas = <HTMLCanvasElement>document.getElementById('grid');
 const renderer = new Renderer(canvas);
 let grid : Grid = null;
 let gen : Generator = null;
-let dict : Dict = new Dict(wordlist);
+let dict : Dict = new Dict();
 
 function createGrid() {
 
@@ -18,8 +17,10 @@ function createGrid() {
         return;
     }
 
-    const symmetry = (<HTMLInputElement>document.getElementById("grid_symmetry")).checked;
-    grid = new Grid(size, symmetry);
+    grid = new Grid(size, dict);
+    grid.symmetrical = (<HTMLInputElement>document.getElementById("grid_symmetry")).checked;
+    grid.combineCount = (<HTMLInputElement>document.getElementById("combine_axis_count")).checked;
+    grid.rescore();
 	
     // Rendering
 
@@ -31,11 +32,6 @@ function createGrid() {
         canvas.height = renderer.scale * size;
     }
     renderer.render(grid);
-}
-
-function updateGridSymmetry() {
-    grid.symmetrical = (<HTMLInputElement>document.getElementById("grid_symmetry")).checked;
-    console.log("Symmetrical: ", grid.symmetrical);
 }
 
 function onClickGrid(e:MouseEvent) {
@@ -56,6 +52,7 @@ function onRightClickGrid(e:MouseEvent) {
     const gx = Math.floor(coord.x / renderer.scale);
     const gy = Math.floor(coord.y / renderer.scale);
     grid.toggleBlock(gx, gy);
+    grid.rescore();
     renderer.render(grid);
 }
 
@@ -74,6 +71,7 @@ function onKeyDown(e:KeyboardEvent) {
 
     if (e.keyCode >= 65 && e.keyCode <= 90) { // character key
         grid.selected.letter = e.key.toUpperCase();
+        grid.rescoreIntersection(grid.selected.x, grid.selected.y);
 
         if ((<HTMLInputElement>document.getElementById("auto_move")).checked) {
             let cx = grid.selected.x + 1;
@@ -92,11 +90,13 @@ function onKeyDown(e:KeyboardEvent) {
         switch (e.keyCode) {
             case 8:
             case 46:
-                grid.selected.letter = ""; // BACKSPACE / DEL
+                grid.selected.letter = null; // BACKSPACE / DEL
+                grid.rescoreIntersection(grid.selected.x, grid.selected.y);
                 break;
 
             case 32:
                 grid.toggleBlock(grid.selected.x, grid.selected.y);
+                grid.rescore();
                 break;
 
             case 37: // left arrow
@@ -127,7 +127,16 @@ function onKeyDown(e:KeyboardEvent) {
 
 // Init event handlers
 (<HTMLInputElement>document.getElementById("reset")).addEventListener('click', (e:MouseEvent) => createGrid());
-(<HTMLInputElement>document.getElementById("grid_symmetry")).addEventListener('change', (e:Event) => updateGridSymmetry());
+(<HTMLInputElement>document.getElementById("rescore")).addEventListener('click', (e:MouseEvent) => grid.rescore());
+(<HTMLInputElement>document.getElementById("grid_symmetry")).addEventListener('change', (e:Event) => {
+    grid.symmetrical = (<HTMLInputElement>document.getElementById("grid_symmetry")).checked;
+});
+(<HTMLInputElement>document.getElementById("combine_axis_count")).addEventListener('change', (e:Event) => {
+    grid.combineCount = (<HTMLInputElement>document.getElementById("combine_axis_count")).checked;
+    grid.rescore();
+    renderer.render(grid);
+});
+
 (<HTMLInputElement>document.getElementById("grid")).addEventListener('click', (e:MouseEvent) => onClickGrid(e));
 (<HTMLInputElement>document.getElementById("grid")).addEventListener('contextmenu', (e:MouseEvent) => onRightClickGrid(e));
 (<HTMLInputElement>document.getElementById("grid")).addEventListener('dblclick', (e:MouseEvent) => onDoubleClickGrid(e));

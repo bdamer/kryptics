@@ -1,5 +1,12 @@
+import wordlist from './wordlist.txt';
+//import wordlist from './spreadthewordlist.txt';
 
-const maxLength = 30;
+export const minWordLength = 3;
+export const maxWordLength = 30;
+
+export class WordArray {
+    constructor(public from:number, public to:number, public letters:string[]) { }
+}
 
 export class Dict {
 
@@ -7,17 +14,20 @@ export class Dict {
     wordsByLength:string[][] = [];
     wordsByLetter:Map<string,string[]> = new Map<string,string[]>();
 
-    constructor(wordlist:string) {
-        this.wordsByLength.length = maxLength;
+    constructor() {
+        this.wordsByLength.length = maxWordLength;
 
         const lines = wordlist.split("\n");
         for (var i in lines) {
             const line = lines[i];
             const tmp = line.split(";");
             const word = tmp[0].toUpperCase();
+            const score = parseInt(tmp[1]);
 
-            if (word.length < 1 || word.length > maxLength) {
+            if (word.length < minWordLength || word.length > maxWordLength) {
                 console.log("Skipping invalid term: ", word);
+                continue;
+            } else if (score < 50) {
                 continue;
             }
 
@@ -41,5 +51,33 @@ export class Dict {
         console.log(this.words);
         console.log(this.wordsByLength);
         console.log(this.wordsByLetter);
+    }
+
+    matchCount(arr:WordArray) : number { 
+        var res = 0;
+        const unconstrained = arr.letters.every(l => l === null);
+
+        // for (var i = minWordLength; i <= arr.letters.length; i++) {
+        for (var i = arr.letters.length; i <= arr.letters.length; i++) {
+            const words = this.wordsByLength[i - 1];
+            if (!words) continue;
+            if (unconstrained) {
+                res += words.length;
+            } else {
+                for (var j in words) {
+                    res += this.matches(arr.letters, words[j]) ? 1 : 0;
+                }
+            }
+        }
+        return res;
+    }
+
+    matches(pattern:string[], word:string) : boolean {
+        for (var i in pattern) {
+            if (pattern[i] !== null && word[i] !== pattern[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 }

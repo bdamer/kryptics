@@ -10,10 +10,17 @@
 		<div id="actions">
             <h3>Settings</h3>
             <label for="grid_size">Grid size <input id="grid_size" type="text" value="10" /></label>
-            <input id="reset" type="button" value="Reset" /><br />
+            <input id="reset" type="button" value="Reset" />
+            <input id="rescore" type="button" value="Rescore" /><br />
             <label for="grid_symmetry"><input id="grid_symmetry" type="checkbox" />Symmetrical?</label><br />
-            <label for="auto_move"><input id="auto_move" type="checkbox" />Automatically move to next cell?</label>
+            <label for="auto_move"><input id="auto_move" type="checkbox" />Automatically move to next cell?</label><br />
+            <label for="combine_axis_count"><input id="combine_axis_count" type="checkbox" />Combine axis count?</label><br />
 		</div>
+
+        <div id="score">
+            <h3>Cell Score</h3>
+            <span id="score_log"></span>
+        </div>
 		
         <div id="notes">
             <h3>Notes</h3>

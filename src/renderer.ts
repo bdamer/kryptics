@@ -1,5 +1,5 @@
 import { Grid, Cell } from './grid';
-import { Direction, rgbToHex } from './util';
+import { rgbToHex } from './util';
 
 export class Renderer {
 
@@ -43,7 +43,7 @@ export class Renderer {
 		if (cell.block) {
 			this.ctx.fillStyle = "#000000";
 		} else {
-			this.ctx.fillStyle = "#ffffff";
+			this.ctx.fillStyle = rgbToHex(255, (1.0 - cell.score) * 255, (1.0 - cell.score) * 255);
     	}	
 	    this.ctx.fillRect(cx, cy, this.scale, this.scale);
 
@@ -54,7 +54,7 @@ export class Renderer {
 		
 		if (!cell.block) {
 			// Fill in text
-			if (cell.letter != null) {
+			if (cell.letter !== null) {
 				this.ctx.font = '24px Arial';
 				this.ctx.fillStyle = "#000000";
 				this.ctx.strokeStyle = "#000000";
@@ -62,9 +62,8 @@ export class Renderer {
 			}
 		}
 
-
 		if (cell.focus) {
-			this.ctx.strokeStyle = "#ff0000";
+			this.ctx.strokeStyle = "#0000ff";
 			this.ctx.lineWidth = 1;
 			this.ctx.strokeRect(cx + 1, cy + 1, this.scale - 2, this.scale - 2);
 		}

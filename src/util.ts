@@ -16,7 +16,7 @@ function toHex(c: number) : string {
 }
 
 export function rgbToHex(r: number, g: number, b: number) : string {
-    return "#" + toHex(r) + toHex(g) + toHex(b);
+    return "#" + toHex(Math.floor(r)) + toHex(Math.floor(g)) + toHex(Math.floor(b));
 }
 
 export function clickPos(e:MouseEvent, canvas:HTMLCanvasElement) : Vector2 {
