@@ -115,6 +115,8 @@ function onKeyDown(e:KeyboardEvent) {
             default:
                 return; // invalid key
         }
+
+	e.preventDefault();
     }
 
     renderer.render(grid);

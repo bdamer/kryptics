@@ -45,7 +45,7 @@ export class Grid {
     }
 
     toggleBlock(x: number, y: number) {
-        const cell = this.cellAt(x, x);
+        const cell = this.cellAt(x, y);
         if (cell != null) {
             cell.block = !cell.block;
         }
