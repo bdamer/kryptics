@@ -1,0 +1,5 @@
+alpha;50
+beta;50
+gamma;50
+delta;50
+epsilon;50

@@ -1,11 +1,14 @@
+import { Dict } from "./dictionary";
 import { Grid, Cell } from "./grid";
 import { Renderer } from "./renderer"; 
 import { clickPos } from "./util";
+import wordlist from './wordlist.txt';
 
 const canvas = <HTMLCanvasElement>document.getElementById('grid');
 const renderer = new Renderer(canvas);
 let grid : Grid = null;
 let gen : Generator = null;
+let dict : Dict = new Dict(wordlist);
 
 function createGrid() {
 
@@ -62,7 +65,7 @@ function onDoubleClickGrid(e:MouseEvent) {
 }
 
 function onKeyDown(e:KeyboardEvent) {
-    console.log(e);
+    // console.log(e);
 
     // only if canvas has focus and we've selected an element
     if (document.body != document.activeElement || grid.selected == null) {
@@ -116,7 +119,7 @@ function onKeyDown(e:KeyboardEvent) {
                 return; // invalid key
         }
 
-	e.preventDefault();
+	    e.preventDefault();
     }
 
     renderer.render(grid);
@@ -132,3 +135,4 @@ function onKeyDown(e:KeyboardEvent) {
 
 // Startup
 createGrid();
+
