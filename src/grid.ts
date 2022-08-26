@@ -198,18 +198,15 @@ export class Grid {
         if (c.hcount == 0) {
             c.score += 1.0;
             c.scoreLog += "+1.0 no possible words on horizontal<br />";
-        }
-
-        if (c.vcount == 0) {
+        } else if (c.vcount == 0) {
             c.score += 1.0;
             c.scoreLog += "+1.0 no possible words on vertical<br />";
+        } else {
+            const total = this.combineCount ? (c.hcount + c.vcount) : Math.min(c.hcount, c.vcount);
+            const frac = 1.0 - (total / this.maxWords);
+            c.score += frac;
+            c.scoreLog += ("+" + frac.toPrecision(3) + " based on number of possible words [" + total + " / " + this.maxWords + "]<br />");
         }
-
-    
-        const total = this.combineCount ? (c.hcount + c.vcount) : Math.min(c.hcount, c.vcount);
-        const frac = 1.0 - (total / this.maxWords);
-        c.score += frac;
-        c.scoreLog += ("+" + frac.toPrecision(3) + " based on number of available words [" + total + " / " + this.maxWords + "]<br />");
 
         c.score *= c.score;        
         c.score = Math.min(1.0, c.score);

@@ -1,5 +1,5 @@
 import wordlist from './wordlist.txt';
-//import wordlist from './spreadthewordlist.txt';
+//import wordlist from './highwordlist.txt';
 
 export const minWordLength = 3;
 export const maxWordLength = 30;
