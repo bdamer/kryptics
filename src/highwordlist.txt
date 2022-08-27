@@ -4219,6 +4219,7 @@ archived;50
 archiveofourown;50
 archives;50
 archiving;50
+archnemesis;50
 archrival;50
 archvillain;50
 archway;50
