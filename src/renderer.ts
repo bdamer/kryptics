@@ -26,7 +26,16 @@ export class Renderer {
 			const cy = cell.y * this.scale;
 	
 			// Fill in clue index
-			if ( cell.y == 0 || cell.x == 0 || grid.cells[i - grid.size].block || grid.cells[i - 1].block) {
+			const horClue = cell.x == 0 || grid.cells[i - 1].block;
+			const verClue = cell.y == 0 || grid.cells[i - grid.size].block;
+			if (horClue || verClue) {
+				if (grid.ignoreSingleSpace) {
+					if (horClue && cell.hlen < 2)
+						continue;
+					if (verClue && cell.vlen < 2)
+						continue;
+				}
+
 				clueIdx++;
 				this.ctx.font = '8px Arial';
 				this.ctx.fillStyle = "#222222";

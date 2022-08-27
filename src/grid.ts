@@ -21,6 +21,21 @@ export class Cell {
         this.score = 0.0;
         this.scoreLog = "";
     }
+
+    getWordCount(combineCount:boolean, ignoreSingleSpace:boolean) : number {
+        if (combineCount) {
+            return this.hcount + this.vcount;
+        } else {
+            if (ignoreSingleSpace) {
+                if (this.hlen == 1) {
+                    return this.vcount;
+                } else if (this.vlen == 1) {
+                    return this.hcount;
+                }
+            }
+            return Math.min(this.hcount, this.vcount);
+        }
+    }
 }
 
 export class Grid {
@@ -31,6 +46,8 @@ export class Grid {
     maxWords: number;
     symmetrical: boolean;
     combineCount:boolean;
+    ignoreSingleSpace: boolean;
+    limitMaxWords: boolean;
 
     constructor(public size: number, dict:Dict) {
         this.cells = new Array(size * size);
@@ -64,7 +81,13 @@ export class Grid {
     updateScoreInfo() {
         const el = <HTMLSpanElement>document.getElementById("score_log");
         if (el && this.selected) {
-            el.innerHTML = this.selected.scoreLog;
+            let info;
+            if (this.selected.block) {
+                info = "Block";
+            } else {
+                info = this.selected.scoreLog;
+            }
+            el.innerHTML = "Cell: [" + this.selected.x + " / " + this.selected.y + "]<br/>" + info;
         }
     }
 
@@ -191,22 +214,42 @@ export class Grid {
         }
 
         c.score = 0.0;
-        c.scoreLog = "Cell: [" + c.x + " / " + c.y + "]<br/>" +
+        c.scoreLog = 
             "Horizontal words " + c.hword.letters.map(l => l == null ? "*" : l).join('') + " [" + c.hlen + "]: " + c.hcount + "<br />" +
             "Vertical words " + c.vword.letters.map(l => l == null ? "*" : l).join('') + " [" + c.vlen + "]: " + c.vcount + "<br />";
 
-        if (c.hcount == 0) {
-            c.score += 1.0;
-            c.scoreLog += "+1.0 no possible words on horizontal<br />";
-        } else if (c.vcount == 0) {
-            c.score += 1.0;
-            c.scoreLog += "+1.0 no possible words on vertical<br />";
-        } else {
-            const total = this.combineCount ? (c.hcount + c.vcount) : Math.min(c.hcount, c.vcount);
-            const frac = 1.0 - (total / this.maxWords);
+        
+        if (this.ignoreSingleSpace) {
+            var total : number;
+            if (c.hlen == 1) {
+                total = c.vcount;
+            } else if (c.vlen == 1) {
+                total = c.hcount;
+            } else {
+                total = this.combineCount ? (c.hcount + c.vcount) : Math.min(c.hcount, c.vcount);
+            }
+            const lMax = this.limitMaxWords ? Math.min(100, this.maxWords) : this.maxWords;
+            const lTotal = this.limitMaxWords ? Math.min(100, total) : total;
+            const frac = 1.0 - (lTotal / lMax);
             c.score += frac;
-            c.scoreLog += ("+" + frac.toPrecision(3) + " based on number of possible words [" + total + " / " + this.maxWords + "]<br />");
+            c.scoreLog += ("+" + frac.toPrecision(3) + " based on number of possible words [" + lTotal + " / " + lMax + "]<br />");
+        } else {
+            if (c.hcount == 0) {
+                c.score += 1.0;
+                c.scoreLog += "+1.0 no possible words on horizontal<br />";
+            } else if (c.vcount == 0) {
+                c.score += 1.0;
+                c.scoreLog += "+1.0 no possible words on vertical<br />";
+            } else {
+                const total = this.combineCount ? (c.hcount + c.vcount) : Math.min(c.hcount, c.vcount);
+                const lMax = this.limitMaxWords ? Math.min(100, this.maxWords) : this.maxWords;
+                const lTotal = this.limitMaxWords ? Math.min(100, total) : total;
+                const frac = 1.0 - (lTotal / lMax);
+                c.score += frac;
+                c.scoreLog += ("+" + frac.toPrecision(3) + " based on number of possible words [" + lTotal + " / " + lMax + "]<br />");
+            }
         }
+
 
         c.score *= c.score;        
         c.score = Math.min(1.0, c.score);
@@ -220,13 +263,8 @@ export class Grid {
         // Determine number of available words for each cell
         this.cells.forEach(c => {
             this.determineWordCount(c);
-
             if (!c.block) {
-                if (this.combineCount) {
-                    this.maxWords = Math.max(c.hcount + c.vcount, this.maxWords);
-                } else {
-                    this.maxWords = Math.max(Math.min(c.hcount, c.vcount), this.maxWords);
-                }
+                this.maxWords = Math.max(c.getWordCount(this.combineCount, this.ignoreSingleSpace), this.maxWords);
             }
         });
 
@@ -250,11 +288,7 @@ export class Grid {
         this.maxWords = 0;
         this.cells.forEach(c => {
             if (!c.block) {
-                if (this.combineCount) {
-                    this.maxWords = Math.max(c.hcount + c.vcount, this.maxWords);
-                } else {
-                    this.maxWords = Math.max(Math.min(c.hcount, c.vcount), this.maxWords);
-                }
+                this.maxWords = Math.max(c.getWordCount(this.combineCount, this.ignoreSingleSpace), this.maxWords);
             }
         });
 

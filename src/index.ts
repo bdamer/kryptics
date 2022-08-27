@@ -20,6 +20,8 @@ function createGrid() {
     grid = new Grid(size, dict);
     grid.symmetrical = (<HTMLInputElement>document.getElementById("grid_symmetry")).checked;
     grid.combineCount = (<HTMLInputElement>document.getElementById("combine_axis_count")).checked;
+    grid.ignoreSingleSpace = (<HTMLInputElement>document.getElementById("ignore_single_space")).checked;
+    grid.limitMaxWords = (<HTMLInputElement>document.getElementById("limit_max_words")).checked;
     grid.rescore();
 	
     // Rendering
@@ -136,7 +138,16 @@ function onKeyDown(e:KeyboardEvent) {
     grid.rescore();
     renderer.render(grid);
 });
-
+(<HTMLInputElement>document.getElementById("ignore_single_space")).addEventListener('change', (e:Event) => {
+    grid.ignoreSingleSpace = (<HTMLInputElement>document.getElementById("ignore_single_space")).checked;
+    grid.rescore();
+    renderer.render(grid);
+});
+(<HTMLInputElement>document.getElementById("limit_max_words")).addEventListener('change', (e:Event) => {
+    grid.limitMaxWords = (<HTMLInputElement>document.getElementById("limit_max_words")).checked;
+    grid.rescore();
+    renderer.render(grid);
+});
 (<HTMLInputElement>document.getElementById("grid")).addEventListener('click', (e:MouseEvent) => onClickGrid(e));
 (<HTMLInputElement>document.getElementById("grid")).addEventListener('contextmenu', (e:MouseEvent) => onRightClickGrid(e));
 (<HTMLInputElement>document.getElementById("grid")).addEventListener('dblclick', (e:MouseEvent) => onDoubleClickGrid(e));
