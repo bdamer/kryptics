@@ -29,6 +29,8 @@ export class Renderer {
 			const horClue = cell.x == 0 || grid.cells[i - 1].block;
 			const verClue = cell.y == 0 || grid.cells[i - grid.size].block;
 			if (horClue || verClue) {
+				
+				// skip clue index if this is a 1-space
 				if (grid.ignoreSingleSpace) {
 					if (horClue && cell.hlen < 2)
 						continue;
@@ -48,7 +50,7 @@ export class Renderer {
 		const cx = cell.x * this.scale;
 		const cy = cell.y * this.scale;
 
-		// Fill
+		// Fill rect with solid color
 		if (cell.block) {
 			this.ctx.fillStyle = "#000000";
 		} else {
@@ -56,21 +58,20 @@ export class Renderer {
     	}	
 	    this.ctx.fillRect(cx, cy, this.scale, this.scale);
 
-		// Outline
+		// Draw outline 
 		this.ctx.strokeStyle = "#999999";
 		this.ctx.lineWidth = 1;
 		this.ctx.strokeRect(cx, cy, this.scale, this.scale);
 		
-		if (!cell.block) {
-			// Fill in text
-			if (cell.letter !== null) {
-				this.ctx.font = '24px Arial';
-				this.ctx.fillStyle = "#000000";
-				this.ctx.strokeStyle = "#000000";
-				this.ctx.fillText(cell.letter, cx+6, cy + 24);
-			}
+		// Fill in text
+		if (!cell.block && cell.letter !== null) {
+			this.ctx.font = '24px Arial';
+			this.ctx.fillStyle = "#000000";
+			this.ctx.strokeStyle = "#000000";
+			this.ctx.fillText(cell.letter, cx+6, cy + 24);
 		}
 
+		// Draw highlight rect
 		if (cell.focus) {
 			this.ctx.strokeStyle = "#0000ff";
 			this.ctx.lineWidth = 1;

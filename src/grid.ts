@@ -6,9 +6,11 @@ export class Cell {
     block: boolean;
     focus: boolean;
     hword: WordArray;
+	hoptions: string[];
     hlen: number; // horizontal word length
     hcount: number; // number of horizontal words
     vword: WordArray;
+	voptions: string[];
     vlen: number; // vertical word length
     vcount: number; // number of vertical words
     score: number;
@@ -44,10 +46,10 @@ export class Grid {
     selected: Cell|null;
     dict: Dict;
     maxWords: number;
+	maxWordCap: number;
     symmetrical: boolean;
     combineCount:boolean;
     ignoreSingleSpace: boolean;
-    limitMaxWords: boolean;
 
     constructor(public size: number, dict:Dict) {
         this.cells = new Array(size * size);
@@ -78,17 +80,53 @@ export class Grid {
         }
     }
 
+	updateSuggestions(el:HTMLSelectElement, words:string[]) {
+		while (el.options.length > 0) {
+			el.remove(0);
+		}
+
+		for (var i = 0; i < words.length && i < 1000; i++) {
+			const option = document.createElement("option") as HTMLOptionElement;
+            option.value = words[i];
+            option.text = words[i];
+            el.options.add(option);
+		}
+	}
+
     updateScoreInfo() {
-        const el = <HTMLSpanElement>document.getElementById("score_log");
-        if (el && this.selected) {
+		const hOptions = <HTMLSelectElement>document.getElementById("h_suggestions");
+		const vOptions = <HTMLSelectElement>document.getElementById("v_suggestions");
+		const cellPos = <HTMLInputElement>document.getElementById("cell_pos");
+		const scoreLog = <HTMLTextAreaElement>document.getElementById("score_log");
+		const hLabel = <HTMLLabelElement>document.getElementById("label_h_suggestions");
+		const vLabel = <HTMLLabelElement>document.getElementById("label_v_suggestions");
+
+		hLabel.innerHTML = "Across";
+		vLabel.innerHTML = "Down";
+		cellPos.value = "";
+		scoreLog.value = "";
+		this.updateSuggestions(hOptions, []);
+		this.updateSuggestions(vOptions, []);				
+
+
+        if (this.selected) {
+			cellPos.value = this.selected.x + "," + this.selected.y;
             let info;
             if (this.selected.block) {
                 info = "Block";
+				this.updateSuggestions(hOptions, []);
+				this.updateSuggestions(vOptions, []);				
             } else {
+				hLabel.innerHTML = "Across " + this.selected.hword.letters.map(l => l == null ? "*" : l).join('') 
+					+ " [" + this.selected.hlen + "]: " + this.selected.hcount;
+				vLabel.innerHTML = "Down " + this.selected.vword.letters.map(l => l == null ? "*" : l).join('') 
+					+ " [" + this.selected.vlen + "]: " + this.selected.vcount;
                 info = this.selected.scoreLog;
+				this.updateSuggestions(hOptions, this.selected.hoptions);
+				this.updateSuggestions(vOptions, this.selected.voptions);
             }
-            el.innerHTML = "Cell: [" + this.selected.x + " / " + this.selected.y + "]<br/>" + info;
-        }
+			scoreLog.value = info;
+    	}
     }
 
     toggleBlock(x: number, y: number) {
@@ -201,8 +239,10 @@ export class Grid {
         c.vlen = 1 + c.vword.to - c.vword.from ;
 
         // determine number of words that for each dimension
-        c.hcount = this.dict.matchCount(c.hword);
-        c.vcount = this.dict.matchCount(c.vword);
+		c.hoptions = this.dict.matchAll(c.hword);
+        c.hcount = c.hoptions.length;
+        c.voptions = this.dict.matchAll(c.vword);
+        c.vcount = c.voptions.length;
 
         return c.hcount + c.vcount;
     }
@@ -214,11 +254,8 @@ export class Grid {
         }
 
         c.score = 0.0;
-        c.scoreLog = 
-            "Horizontal words " + c.hword.letters.map(l => l == null ? "*" : l).join('') + " [" + c.hlen + "]: " + c.hcount + "<br />" +
-            "Vertical words " + c.vword.letters.map(l => l == null ? "*" : l).join('') + " [" + c.vlen + "]: " + c.vcount + "<br />";
+        c.scoreLog = "";
 
-        
         if (this.ignoreSingleSpace) {
             var total : number;
             if (c.hlen == 1) {
@@ -228,25 +265,25 @@ export class Grid {
             } else {
                 total = this.combineCount ? (c.hcount + c.vcount) : Math.min(c.hcount, c.vcount);
             }
-            const lMax = this.limitMaxWords ? Math.min(100, this.maxWords) : this.maxWords;
-            const lTotal = this.limitMaxWords ? Math.min(100, total) : total;
+            const lMax = this.maxWordCap ? Math.min(this.maxWordCap, this.maxWords) : this.maxWords;
+            const lTotal = this.maxWordCap ? Math.min(this.maxWordCap, total) : total;
             const frac = 1.0 - (lTotal / lMax);
             c.score += frac;
-            c.scoreLog += ("+" + frac.toPrecision(3) + " based on number of possible words [" + lTotal + " / " + lMax + "]<br />");
+            c.scoreLog += ("+" + frac.toPrecision(3) + " based on number of possible words [" + lTotal + " / " + lMax + "]\n");
         } else {
             if (c.hcount == 0) {
                 c.score += 1.0;
-                c.scoreLog += "+1.0 no possible words on horizontal<br />";
+                c.scoreLog += "+1.0 no possible words on horizontal\n";
             } else if (c.vcount == 0) {
                 c.score += 1.0;
-                c.scoreLog += "+1.0 no possible words on vertical<br />";
+                c.scoreLog += "+1.0 no possible words on vertical\n";
             } else {
                 const total = this.combineCount ? (c.hcount + c.vcount) : Math.min(c.hcount, c.vcount);
-                const lMax = this.limitMaxWords ? Math.min(100, this.maxWords) : this.maxWords;
-                const lTotal = this.limitMaxWords ? Math.min(100, total) : total;
+                const lMax = this.maxWordCap ? Math.min(this.maxWordCap, this.maxWords) : this.maxWords;
+                const lTotal = this.maxWordCap ? Math.min(this.maxWordCap, total) : total;
                 const frac = 1.0 - (lTotal / lMax);
                 c.score += frac;
-                c.scoreLog += ("+" + frac.toPrecision(3) + " based on number of possible words [" + lTotal + " / " + lMax + "]<br />");
+                c.scoreLog += ("+" + frac.toPrecision(3) + " based on number of possible words [" + lTotal + " / " + lMax + "]\n");
             }
         }
 
@@ -297,4 +334,18 @@ export class Grid {
 
         this.updateScoreInfo();
     }
+	
+	fillHorizontal(value:string) { 
+		if (!this.selected) return;
+		for (var i = 0; i < value.length; i++) {
+			this.cellAt(this.selected.hword.from + i, this.selected.y).letter = value.charAt(i);
+		}
+	}
+	
+	fillVertical(value:string) {
+		if (!this.selected) return;
+		for (var i = 0; i < value.length; i++) {
+			this.cellAt(this.selected.x, this.selected.vword.from + i).letter = value.charAt(i);
+		}
+	}
 }

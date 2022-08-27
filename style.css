@@ -1,0 +1,75 @@
+
+div {
+	display: block;
+}
+
+h3 {
+	margin-left: 5px;
+}
+
+input[type="text"] {
+	width: 32px;
+}
+
+.container {
+	width: 80%;
+	margin: auto;
+}
+
+#menubar {
+	float: left;
+	width: 320px;
+	height: 600px;
+	background-color: #ddd;
+}
+
+#menubar div {
+	padding: 5px;
+	padding-left: 15px;	
+}
+
+#actions {
+}
+
+#notes {
+	padding: 5px;
+}
+
+#content {
+	margin-left: 330px;
+	height: 640px;
+	/*max-width:1100px;*/
+}
+
+#mainbar {
+	float: left;
+	width: 720px;
+}
+
+#sidebar {
+	float: right;
+	width: 320px;
+	height: 600px;
+	background-color: #ddd;
+}
+
+#sidebar div {
+	padding: 5px;
+	padding-left: 15px;	
+}
+
+#suggestions select {
+	height: 120px;
+	width: 200px;
+}
+
+#sidebar textarea {
+	width: 270px;
+	height: 110px;
+}
+
+#footer {
+	width: 80%;
+	margin: auto;
+	text-align: center;
+}

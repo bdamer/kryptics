@@ -2,42 +2,72 @@
 <html>
     <head>
         <title>Kryptics</title>
+		<link rel="stylesheet" href="style.css">
     </head>
     <body>
-        <canvas id="grid" width="32" height="32"></canvas>
-        <div id="inputs">
-        </div>
-		<div id="actions">
-            <h3>Settings</h3>
-            <label for="grid_size">Grid size <input id="grid_size" type="text" value="10" /></label>
-            <input id="reset" type="button" value="Reset" />
-            <input id="rescore" type="button" value="Rescore" /><br />
-            <label for="grid_symmetry"><input id="grid_symmetry" type="checkbox" />Symmetrical?</label><br />
-            <label for="auto_move"><input id="auto_move" type="checkbox" />Automatically move to next cell?</label><br />
-            <label for="combine_axis_count"><input id="combine_axis_count" type="checkbox" />Combine axis count?</label><br />
-            <label for="ignore_single_space"><input id="ignore_single_space" type="checkbox" />Ignore 1-space entries?</label><br />
-            <label for="limit_max_words"><input id="limit_max_words" type="checkbox" />Limit max words to 100?</label><br />
+	
+		<div id="header">
+			
 		</div>
+	
+		<div class="container">
+	
+			<div id="menubar">
+				<div id="actions">
+					<h3>Settings</h3>
+					<label for="grid_size">Grid size <input id="grid_size" type="text" value="15" /></label><br />
+					<label for="max_word_cap">Max word cap <input id="max_word_cap" type="text" value="10000" /></label><br />
+					<label for="grid_symmetry"><input id="grid_symmetry" type="checkbox" />Symmetrical?</label><br />
+					<label for="auto_move"><input id="auto_move" type="checkbox" />Automatically move to next cell?</label><br />
+					<label for="combine_axis_count"><input id="combine_axis_count" type="checkbox" />Combine axis count?</label><br />
+					<label for="ignore_single_space"><input id="ignore_single_space" type="checkbox" />Ignore 1-space entries?</label><br />
+					<input id="reset" type="button" value="Reset" />
+					<input id="rescore" type="button" value="Rescore" /><br />
+				</div>
+				<div id="notes">
+					<h3>Notes</h3>
+					<ul>
+						<li>Left-click selects a cell</li>
+						<li>Typing a letter will update the selected cell</li>
+						<li>Right-click or SPACE toggles block</li>
+						<li>ARROW keys to navigate</li>
+						<li>DEL or BACKSPACE to delete</li>
+						<li>Double-click on a suggestion to fill in</li>
+					</ul>
+				</div>		
+			</div>
+			
+			<div id="content">
+		
+				<div id="mainbar">
+					<canvas id="grid" width="32" height="32"></canvas>
+				</div>
 
-        <div id="score">
-            <h3>Cell Score</h3>
-            <span id="score_log"></span>
-        </div>
-		
-        <div id="notes">
-            <h3>Notes</h3>
-            <ul>
-                <li>Left-click selects a cell</li>
-                <li>Typing a letter will update the selected cell</li>
-                <li>Right-click or SPACE toggles block</li>
-                <li>ARROW keys to navigate</li>
-                <li>DEL or BACKSPACE to delete</li>
-            </ul>
-        </div>
-		
-		<div id="footer">
-			<a href="https://github.com/bdamer/kryptics">Source</a>
+				<div id="sidebar">
+					<div id="suggestions">
+						<h3>Suggestions</h3>
+						<label id="label_h_suggestions" for="h_suggestions">Across</label><br />
+						<select id="h_suggestions" size="10">
+						</select><br /><br />
+						<label id="label_v_suggestions" for="v_suggestions">Down</label><br />
+						<select id="v_suggestions" size="10">
+						</select>
+					</div>		
+					<div id="score">
+						<h3>Cell</h3>
+						<label for="cell_pos">Cell: <input type="text" id="cell_pos" readonly="true" /></label><br />
+						<label for="score_log">Score: </label><br />
+						<textarea id="score_log"></textarea><br />
+					</div>
+				</div>
+			
+			</div>
+			
 		</div>
+		
+		<footer id="footer">
+			<a href="https://github.com/bdamer/kryptics">Source</a>
+		</footer>
 
         <script src="./dist/bundle.js"></script>
     </body>

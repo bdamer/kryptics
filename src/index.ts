@@ -21,7 +21,7 @@ function createGrid() {
     grid.symmetrical = (<HTMLInputElement>document.getElementById("grid_symmetry")).checked;
     grid.combineCount = (<HTMLInputElement>document.getElementById("combine_axis_count")).checked;
     grid.ignoreSingleSpace = (<HTMLInputElement>document.getElementById("ignore_single_space")).checked;
-    grid.limitMaxWords = (<HTMLInputElement>document.getElementById("limit_max_words")).checked;
+    grid.maxWordCap = parseInt((<HTMLInputElement>document.getElementById("max_word_cap")).value);
     grid.rescore();
 	
     // Rendering
@@ -143,8 +143,8 @@ function onKeyDown(e:KeyboardEvent) {
     grid.rescore();
     renderer.render(grid);
 });
-(<HTMLInputElement>document.getElementById("limit_max_words")).addEventListener('change', (e:Event) => {
-    grid.limitMaxWords = (<HTMLInputElement>document.getElementById("limit_max_words")).checked;
+(<HTMLInputElement>document.getElementById("max_word_cap")).addEventListener('change', (e:Event) => {
+    grid.maxWordCap = parseInt((<HTMLInputElement>document.getElementById("max_word_cap")).value);
     grid.rescore();
     renderer.render(grid);
 });
@@ -153,6 +153,32 @@ function onKeyDown(e:KeyboardEvent) {
 (<HTMLInputElement>document.getElementById("grid")).addEventListener('dblclick', (e:MouseEvent) => onDoubleClickGrid(e));
 (document).addEventListener('keydown', (e:KeyboardEvent) => onKeyDown(e));
 
+(<HTMLInputElement>document.getElementById("h_suggestions")).addEventListener('dblclick', (e:MouseEvent) => {
+	if (grid.selected == null) {
+		return;
+	}
+	const hOptions = <HTMLSelectElement>document.getElementById("h_suggestions");
+	const selected = hOptions.options[hOptions.selectedIndex];
+	if (selected) {
+		grid.fillHorizontal(selected.value);
+		grid.rescore();
+		renderer.render(grid);
+	}
+});
+
+(<HTMLInputElement>document.getElementById("v_suggestions")).addEventListener('dblclick', (e:MouseEvent) => {
+	if (grid.selected == null) {
+		return;
+	}
+	const vOptions = <HTMLSelectElement>document.getElementById("v_suggestions");
+	const selected = vOptions.options[vOptions.selectedIndex];
+	if (selected) {
+		grid.fillVertical(selected.value);
+		grid.rescore();
+		
+		renderer.render(grid);
+	}
+});
+
 // Startup
 createGrid();
-

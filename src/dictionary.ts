@@ -1,5 +1,5 @@
-import wordlist from './wordlist.txt';
-//import wordlist from './highwordlist.txt';
+//import wordlist from './wordlist.txt';
+import wordlist from './highwordlist.txt';
 
 export const minWordLength = 3;
 export const maxWordLength = 30;
@@ -53,8 +53,8 @@ export class Dict {
         console.log(this.wordsByLetter);
     }
 
-    matchCount(arr:WordArray) : number { 
-        var res = 0;
+    matchAll(arr:WordArray) : string[] { 
+        var res = [];
         const unconstrained = arr.letters.every(l => l === null);
 
         // for (var i = minWordLength; i <= arr.letters.length; i++) {
@@ -62,10 +62,12 @@ export class Dict {
             const words = this.wordsByLength[i - 1];
             if (!words) continue;
             if (unconstrained) {
-                res += words.length;
+				res.push(...words);
             } else {
                 for (var j in words) {
-                    res += this.matches(arr.letters, words[j]) ? 1 : 0;
+					if (this.matches(arr.letters, words[j])) {
+						res.push(words[j]);
+					}
                 }
             }
         }
