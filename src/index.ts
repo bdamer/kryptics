@@ -27,6 +27,14 @@ function createGrid(settings:GridSettings, cells:string|null) {
 
     grid.rescore();
 
+    // Fix control values
+    (<HTMLSelectElement>document.getElementById("grid_style")).selectedIndex = settings.style;
+    (<HTMLInputElement>document.getElementById("grid_size")).value = "" + settings.size;
+    (<HTMLInputElement>document.getElementById("grid_symmetry")).checked = settings.symmetrical;
+    (<HTMLInputElement>document.getElementById("combine_axis_count")).checked = settings.combineCount;
+    (<HTMLInputElement>document.getElementById("ignore_single_space")).checked = settings.ignoreSingleSpace;
+    (<HTMLInputElement>document.getElementById("max_word_cap")).value = "" + settings.maxWordCap;
+
     // Rendering
 
     // resize canvas if needed
