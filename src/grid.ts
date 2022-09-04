@@ -1,9 +1,11 @@
-import { minWordLength, maxWordLength, WordArray, Dict } from "./dictionary";
+import { WordArray, Dict } from "./dictionary";
+import { Vector2 } from "./util";
+
+export type RedrawHandler = () => void;
 
 export class Cell {
 
     letter: string|null;
-    block: boolean;
     focus: boolean;
     hword: WordArray;
 	hoptions: string[];
@@ -18,7 +20,6 @@ export class Cell {
 
     constructor(public x: number, public y: number) { 
         this.letter = null;
-        this.block = false;
         this.hlen
         this.score = 0.0;
         this.scoreLog = "";
@@ -40,29 +41,45 @@ export class Cell {
     }
 }
 
-export class Grid {
+export abstract class Grid<CellType extends Cell> {
 
-    cells: Cell[];
-    selected: Cell|null;
     dict: Dict;
+    redrawHandler: RedrawHandler;
+    selected: CellType|null;
+    cells: CellType[];
     maxWords: number;
 	maxWordCap: number;
     symmetrical: boolean;
     combineCount:boolean;
     ignoreSingleSpace: boolean;
 
-    constructor(public size: number, dict:Dict) {
-        this.cells = new Array(size * size);
+    constructor(public size: number, public scale: number, dict:Dict, redrawHandler: RedrawHandler) {
         this.dict = dict;
-        for (var i = 0; i < this.cells.length; i++) {
-            this.cells[i] = new Cell(i % size, Math.floor(i / size));
-        }
+        this.redrawHandler = redrawHandler;
+        this.cells = new Array(size * size);
     }
 
+    // Handler functions
+    onLeftClick(coord:Vector2) { 
+        const gx = Math.floor(coord.x / this.scale);
+        const gy = Math.floor(coord.y / this.scale);
+        this.select(gx, gy);
+        this.redrawHandler();
+    }
+
+    // Called when cell is right-clicked
+    abstract onRightClick(coord:Vector2) : void;
+    // Toggles state of currently selected cell.
+    abstract toggleCell() : void;
+    // Updates score info for selected cell
+    abstract updateScoreInfo() : void;
+    // Computes word count for a given cell
+    abstract determineWordCount(c:CellType) : number;
+
     // Returns cell at grid coordinates.
-    cellAt(x: number, y: number) : Cell|null {
+    cellAt(x: number, y: number) : CellType|null {
         if (x < 0 || x >= this.size || y < 0 || y >= this.size)
-            throw new Error('Invalid grid coordinate.');
+            return null;
         return this.cells[y * this.size + x];
     }
 
@@ -80,6 +97,7 @@ export class Grid {
         }
     }
 
+
 	updateSuggestions(el:HTMLSelectElement, words:string[]) {
 		while (el.options.length > 0) {
 			el.remove(0);
@@ -93,166 +111,60 @@ export class Grid {
 		}
 	}
 
-    updateScoreInfo() {
-		const hOptions = <HTMLSelectElement>document.getElementById("h_suggestions");
-		const vOptions = <HTMLSelectElement>document.getElementById("v_suggestions");
-		const cellPos = <HTMLInputElement>document.getElementById("cell_pos");
-		const scoreLog = <HTMLTextAreaElement>document.getElementById("score_log");
-		const hLabel = <HTMLLabelElement>document.getElementById("label_h_suggestions");
-		const vLabel = <HTMLLabelElement>document.getElementById("label_v_suggestions");
-
-		hLabel.innerHTML = "Across";
-		vLabel.innerHTML = "Down";
-		cellPos.value = "";
-		scoreLog.value = "";
-		this.updateSuggestions(hOptions, []);
-		this.updateSuggestions(vOptions, []);				
-
-
-        if (this.selected) {
-			cellPos.value = this.selected.x + "," + this.selected.y;
-            let info;
-            if (this.selected.block) {
-                info = "Block";
-				this.updateSuggestions(hOptions, []);
-				this.updateSuggestions(vOptions, []);				
-            } else {
-				hLabel.innerHTML = "Across " + this.selected.hword.letters.map(l => l == null ? "*" : l).join('') 
-					+ " [" + this.selected.hlen + "]: " + this.selected.hcount;
-				vLabel.innerHTML = "Down " + this.selected.vword.letters.map(l => l == null ? "*" : l).join('') 
-					+ " [" + this.selected.vlen + "]: " + this.selected.vcount;
-                info = this.selected.scoreLog;
-				this.updateSuggestions(hOptions, this.selected.hoptions);
-				this.updateSuggestions(vOptions, this.selected.voptions);
-            }
-			scoreLog.value = info;
-    	}
-    }
-
-    toggleBlock(x: number, y: number) {
-        const cell = this.cellAt(x, y);
-        if (cell != null) {
-            cell.block = !cell.block;
-        }
-        if (this.symmetrical) {
-            const opposite = this.cellAt(this.size - 1 - x, this.size - 1 - y);
-            if (opposite != null) {
-                opposite.block = cell.block;
+    moveToNext() {
+        // TODO: handle vertical and horizontal movement
+        let cx = this.selected.x + 1;
+        let cy = this.selected.y;
+        if (cx >= this.size) {
+            cx = 0;
+            cy++;
+            if (cy >= this.size) {
+                cy = 0;
             }
         }
+        this.select(cx, cy);
     }
 
-    horizontalWordArray(c:Cell) : WordArray {
-        var lx = c.x;
-        while (lx > 0) {
-            const cur = this.cellAt(lx - 1, c.y);
-            if (cur.block)
-                break;
-            lx--;
-        }
+    rescore() {
+        this.maxWords = 0;
 
-        var rx = c.x;
-        while (rx < this.size - 1) {
-            const cur = this.cellAt(rx + 1, c.y);
-            if (cur.block)
-                break;
-            rx++;
-        }
+        // Determine number of available words for each cell
+        this.cells.forEach(c => {
+            this.determineWordCount(c);
+            this.maxWords = Math.max(c.getWordCount(this.combineCount, this.ignoreSingleSpace), this.maxWords);
+        });
 
-        const letters = [];
-        for (var i = lx; i <= rx; i++) {
-            const ci = this.cellAt(i, c.y);
-            letters.push(ci.letter);
-        }
-        return new WordArray(lx, rx, letters);
+        console.log("Max words: ", this.maxWords);
+        this.cells.forEach(c => this.scoreCell(c));
+
+        this.updateScoreInfo();
     }
 
-    horizonalWordLength(c:Cell) : number { 
-        var lx = c.x;
-        while (lx > 0) {
-            const cur = this.cellAt(lx - 1, c.y);
-            if (cur.block)
-                break;
-            lx--;
+    rescoreIntersection(x: number, y: number) {
+
+        for (var i = 0; i < this.size; i++) {
+            const hc = this.cellAt(i, y);
+            this.determineWordCount(hc);
+            if (i != y) {
+                const vc = this.cellAt(x, i);
+                this.determineWordCount(vc);
+            }
         }
 
-        var rx = c.x;
-        while (rx < this.size - 1) {
-            const cur = this.cellAt(rx + 1, c.y);
-            if (cur.block)
-                break;
-            rx++;
-        }
-        return 1 + rx - lx;
+        this.maxWords = 0;
+        this.cells.forEach(c => {
+            this.maxWords = Math.max(c.getWordCount(this.combineCount, this.ignoreSingleSpace), this.maxWords);
+        });
+
+        console.log("Max words: ", this.maxWords);
+        this.cells.forEach(c => this.scoreCell(c));
+
+        this.updateScoreInfo();
     }
 
-    verticalWordArray(c:Cell) : WordArray {
-        var ty = c.y;
-        while (ty > 0) {
-            const cur = this.cellAt(c.x, ty - 1);
-            if (cur.block)
-                break;
-            ty--;
-        }
-        var by = c.y;
-        while (by < this.size - 1) {
-            const cur = this.cellAt(c.x, by + 1);
-            if (cur.block)
-                break;
-            by++;
-        }
-
-        const letters = [];
-        for (var i = ty; i <= by; i++) {
-            const ci = this.cellAt(c.x, i);
-            letters.push(ci.letter);
-        }
-        return new WordArray(ty, by, letters);
-    }
-
-    verticalWordLength(c:Cell) : number { 
-        var ty = c.y;
-        while (ty > 0) {
-            const cur = this.cellAt(c.x, ty - 1);
-            if (cur.block)
-                break;
-            ty--;
-        }
-        var by = c.y;
-        while (by < this.size - 1) {
-            const cur = this.cellAt(c.x, by + 1);
-            if (cur.block)
-                break;
-            by++;
-        }
-        return 1 + by - ty;
-    }
-
-    determineWordCount(c:Cell) : number {
-        if (c.block) {
-            return 0;
-        }
-
-        c.hword = this.horizontalWordArray(c);
-        c.hlen = 1 + c.hword.to - c.hword.from ;
-        c.vword = this.verticalWordArray(c);
-        c.vlen = 1 + c.vword.to - c.vword.from ;
-
-        // determine number of words that for each dimension
-		c.hoptions = this.dict.matchAll(c.hword);
-        c.hcount = c.hoptions.length;
-        c.voptions = this.dict.matchAll(c.vword);
-        c.vcount = c.voptions.length;
-
-        return c.hcount + c.vcount;
-    }
-
-    scoreCell(c:Cell) {
-        if (c.block) {
-            c.score = -1.0;
-            return;
-        }
-
+    // Computes score for a given cell
+    scoreCell(c:CellType) {
+        
         c.score = 0.0;
         c.scoreLog = "";
 
@@ -294,47 +206,6 @@ export class Grid {
         c.scoreLog += "Final score: " + c.score.toPrecision(3);
     }
 
-    rescore() {
-        this.maxWords = 0;
-
-        // Determine number of available words for each cell
-        this.cells.forEach(c => {
-            this.determineWordCount(c);
-            if (!c.block) {
-                this.maxWords = Math.max(c.getWordCount(this.combineCount, this.ignoreSingleSpace), this.maxWords);
-            }
-        });
-
-        console.log("Max words: ", this.maxWords);
-        this.cells.forEach(c => this.scoreCell(c));
-
-        this.updateScoreInfo();
-    }
-
-    rescoreIntersection(x: number, y: number) {
-
-        for (var i = 0; i < this.size; i++) {
-            const hc = this.cellAt(i, y);
-            this.determineWordCount(hc);
-            if (i != y) {
-                const vc = this.cellAt(x, i);
-                this.determineWordCount(vc);
-            }
-        }
-
-        this.maxWords = 0;
-        this.cells.forEach(c => {
-            if (!c.block) {
-                this.maxWords = Math.max(c.getWordCount(this.combineCount, this.ignoreSingleSpace), this.maxWords);
-            }
-        });
-
-        console.log("Max words: ", this.maxWords);
-        this.cells.forEach(c => this.scoreCell(c));
-
-        this.updateScoreInfo();
-    }
-	
 	fillHorizontal(value:string) { 
 		if (!this.selected) return;
 		for (var i = 0; i < value.length; i++) {
@@ -349,3 +220,4 @@ export class Grid {
 		}
 	}
 }
+
