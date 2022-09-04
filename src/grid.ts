@@ -41,6 +41,15 @@ export class Cell {
     }
 }
 
+export class GridSettings {
+    style: number;
+    size: number;
+	maxWordCap: number;
+    symmetrical: boolean;
+    combineCount:boolean;
+    ignoreSingleSpace: boolean;
+}
+
 export abstract class Grid<CellType extends Cell> {
 
     dict: Dict;
@@ -48,15 +57,12 @@ export abstract class Grid<CellType extends Cell> {
     selected: CellType|null;
     cells: CellType[];
     maxWords: number;
-	maxWordCap: number;
-    symmetrical: boolean;
-    combineCount:boolean;
-    ignoreSingleSpace: boolean;
 
-    constructor(public size: number, public scale: number, dict:Dict, redrawHandler: RedrawHandler) {
+    constructor(public settings: GridSettings, public scale: number, dict:Dict, redrawHandler: RedrawHandler) {
         this.dict = dict;
         this.redrawHandler = redrawHandler;
-        this.cells = new Array(size * size);
+        console.log("Creating new grid of size: ", settings.size);
+        this.cells = new Array(settings.size * settings.size);
     }
 
     // Handler functions
@@ -75,12 +81,14 @@ export abstract class Grid<CellType extends Cell> {
     abstract updateScoreInfo() : void;
     // Computes word count for a given cell
     abstract determineWordCount(c:CellType) : number;
+    // Serializes grid to string representation
+    abstract serialize() : string;
 
     // Returns cell at grid coordinates.
     cellAt(x: number, y: number) : CellType|null {
-        if (x < 0 || x >= this.size || y < 0 || y >= this.size)
+        if (x < 0 || x >= this.settings.size || y < 0 || y >= this.settings.size)
             return null;
-        return this.cells[y * this.size + x];
+        return this.cells[y * this.settings.size + x];
     }
 
     select(x: number, y: number) {
@@ -115,10 +123,10 @@ export abstract class Grid<CellType extends Cell> {
         // TODO: handle vertical and horizontal movement
         let cx = this.selected.x + 1;
         let cy = this.selected.y;
-        if (cx >= this.size) {
+        if (cx >= this.settings.size) {
             cx = 0;
             cy++;
-            if (cy >= this.size) {
+            if (cy >= this.settings.size) {
                 cy = 0;
             }
         }
@@ -131,7 +139,7 @@ export abstract class Grid<CellType extends Cell> {
         // Determine number of available words for each cell
         this.cells.forEach(c => {
             this.determineWordCount(c);
-            this.maxWords = Math.max(c.getWordCount(this.combineCount, this.ignoreSingleSpace), this.maxWords);
+            this.maxWords = Math.max(c.getWordCount(this.settings.combineCount, this.settings.ignoreSingleSpace), this.maxWords);
         });
 
         console.log("Max words: ", this.maxWords);
@@ -142,7 +150,7 @@ export abstract class Grid<CellType extends Cell> {
 
     rescoreIntersection(x: number, y: number) {
 
-        for (var i = 0; i < this.size; i++) {
+        for (var i = 0; i < this.settings.size; i++) {
             const hc = this.cellAt(i, y);
             this.determineWordCount(hc);
             if (i != y) {
@@ -153,7 +161,7 @@ export abstract class Grid<CellType extends Cell> {
 
         this.maxWords = 0;
         this.cells.forEach(c => {
-            this.maxWords = Math.max(c.getWordCount(this.combineCount, this.ignoreSingleSpace), this.maxWords);
+            this.maxWords = Math.max(c.getWordCount(this.settings.combineCount, this.settings.ignoreSingleSpace), this.maxWords);
         });
 
         console.log("Max words: ", this.maxWords);
@@ -168,17 +176,17 @@ export abstract class Grid<CellType extends Cell> {
         c.score = 0.0;
         c.scoreLog = "";
 
-        if (this.ignoreSingleSpace) {
+        if (this.settings.ignoreSingleSpace) {
             var total : number;
             if (c.hlen == 1) {
                 total = c.vcount;
             } else if (c.vlen == 1) {
                 total = c.hcount;
             } else {
-                total = this.combineCount ? (c.hcount + c.vcount) : Math.min(c.hcount, c.vcount);
+                total = this.settings.combineCount ? (c.hcount + c.vcount) : Math.min(c.hcount, c.vcount);
             }
-            const lMax = this.maxWordCap ? Math.min(this.maxWordCap, this.maxWords) : this.maxWords;
-            const lTotal = this.maxWordCap ? Math.min(this.maxWordCap, total) : total;
+            const lMax = this.settings.maxWordCap ? Math.min(this.settings.maxWordCap, this.maxWords) : this.maxWords;
+            const lTotal = this.settings.maxWordCap ? Math.min(this.settings.maxWordCap, total) : total;
             const frac = 1.0 - (lTotal / lMax);
             c.score += frac;
             c.scoreLog += ("+" + frac.toPrecision(3) + " based on number of possible words [" + lTotal + " / " + lMax + "]\n");
@@ -190,9 +198,9 @@ export abstract class Grid<CellType extends Cell> {
                 c.score += 1.0;
                 c.scoreLog += "+1.0 no possible words on vertical\n";
             } else {
-                const total = this.combineCount ? (c.hcount + c.vcount) : Math.min(c.hcount, c.vcount);
-                const lMax = this.maxWordCap ? Math.min(this.maxWordCap, this.maxWords) : this.maxWords;
-                const lTotal = this.maxWordCap ? Math.min(this.maxWordCap, total) : total;
+                const total = this.settings.combineCount ? (c.hcount + c.vcount) : Math.min(c.hcount, c.vcount);
+                const lMax = this.settings.maxWordCap ? Math.min(this.settings.maxWordCap, this.maxWords) : this.maxWords;
+                const lTotal = this.settings.maxWordCap ? Math.min(this.settings.maxWordCap, total) : total;
                 const frac = 1.0 - (lTotal / lMax);
                 c.score += frac;
                 c.scoreLog += ("+" + frac.toPrecision(3) + " based on number of possible words [" + lTotal + " / " + lMax + "]\n");

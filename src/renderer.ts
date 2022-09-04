@@ -33,11 +33,11 @@ export class BlockGridRenderer extends Renderer<BlockGrid> {
 	
 			// Fill in clue index
 			const horClue = cell.x == 0 || grid.cells[i - 1].block;
-			const verClue = cell.y == 0 || grid.cells[i - grid.size].block;
+			const verClue = cell.y == 0 || grid.cells[i - grid.settings.size].block;
 			if (horClue || verClue) {
 				
 				// skip clue index if this is a 1-space
-				if (grid.ignoreSingleSpace) {
+				if (grid.settings.ignoreSingleSpace) {
 					if (horClue && cell.hlen < 2)
 						continue;
 					if (verClue && cell.vlen < 2)
@@ -106,7 +106,7 @@ export class BarGridRenderer extends Renderer<BarGrid> {
 			if (horClue || verClue) {
 				
 				// skip clue index if this is a 1-space
-				if (grid.ignoreSingleSpace) {
+				if (grid.settings.ignoreSingleSpace) {
 					if (horClue && cell.hlen < 2)
 						continue;
 					if (verClue && cell.vlen < 2)

@@ -1,4 +1,4 @@
-import { Grid, Cell, RedrawHandler } from "./grid";
+import { Grid, GridSettings, Cell, RedrawHandler } from "./grid";
 import { Vector2 } from "./util";
 import { Dict, WordArray } from "./dictionary";
 
@@ -29,10 +29,21 @@ export class BarCell extends Cell {
 
 export class BarGrid extends Grid<BarCell> {
 
-    constructor(size: number, public scale: number, dict:Dict, redrawHandler: RedrawHandler) {
-        super(size, scale, dict, redrawHandler);
+    constructor(settings: GridSettings, state: string|null, public scale: number, dict:Dict, redrawHandler: RedrawHandler) {
+        super(settings, scale, dict, redrawHandler);
         for (var i = 0; i < this.cells.length; i++) {
-            this.cells[i] = new BarCell(i % size, Math.floor(i / size));
+            this.cells[i] = new BarCell(i % settings.size, Math.floor(i / settings.size));
+
+            if (state) {
+                const c = state.charAt(i * 2);
+                if (c != " ") 
+                    this.cells[i].letter = c;
+                const f = parseInt(state.charAt(i * 2 + 1), 16);
+                this.cells[i].bars[0] = (f & 1) == 1;
+                this.cells[i].bars[1] = (f & 2) == 2;
+                this.cells[i].bars[2] = (f & 4) == 4;
+                this.cells[i].bars[3] = (f & 8) == 8;
+            }
         }
     }
 
@@ -92,7 +103,7 @@ export class BarGrid extends Grid<BarCell> {
         }
 
         var rx = c.x;
-        while (rx < this.size - 1) {
+        while (rx < this.settings.size - 1) {
             const cur = this.cellAt(rx, c.y);
             if (cur.bars[1])
                 break;
@@ -116,7 +127,7 @@ export class BarGrid extends Grid<BarCell> {
             ty--;
         }
         var by = c.y;
-        while (by < this.size - 1) {
+        while (by < this.settings.size - 1) {
             const cur = this.cellAt(c.x, by);
             if (cur.bars[2])
                 break;
@@ -174,5 +185,25 @@ export class BarGrid extends Grid<BarCell> {
             this.updateSuggestions(vOptions, this.selected.voptions);
 			scoreLog.value = info;
     	}
+    }
+
+    serialize() : string {
+        // convert cells into format suitable for serialization
+        var list = [];
+        for (var i in this.cells) {
+            var cell = this.cells[i];
+            if (cell.letter) {
+                list.push(cell.letter);
+            } else {
+                list.push(' ');
+            }
+            let flags = 0;
+            if (cell.bars[0]) flags |= 1;
+            if (cell.bars[1]) flags |= 2;
+            if (cell.bars[2]) flags |= 4;
+            if (cell.bars[3]) flags |= 8;
+            list.push(flags.toString(16));
+        }
+        return list.join('');
     }
 }

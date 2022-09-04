@@ -1,4 +1,4 @@
-import { Cell, Grid, RedrawHandler } from "./grid";
+import { Cell, Grid, GridSettings, RedrawHandler } from "./grid";
 import { Vector2 } from "./util";
 import { Dict, WordArray } from "./dictionary";
 
@@ -13,11 +13,21 @@ export class BlockCell extends Cell {
 
 export class BlockGrid extends Grid<BlockCell> {
 
-    constructor(size: number, public scale: number, dict:Dict, redrawHandler: RedrawHandler) {
-        super(size, scale, dict, redrawHandler);
+    constructor(settings: GridSettings, state:string|null, public scale: number, dict:Dict, redrawHandler: RedrawHandler) {
+        super(settings, scale, dict, redrawHandler);
         for (var i = 0; i < this.cells.length; i++) {
-            this.cells[i] = new BlockCell(i % size, Math.floor(i / size));
+            this.cells[i] = new BlockCell(i % settings.size, Math.floor(i / settings.size));
+            
+            if (state) {
+                const c = state.charAt(i);
+                if (c == "#") {
+                    this.cells[i].block = true;
+                } else if (c != " ") {
+                    this.cells[i].letter = c;
+                }
+            }
         }
+
     }
 
     onRightClick(coord:Vector2) {
@@ -39,8 +49,8 @@ export class BlockGrid extends Grid<BlockCell> {
         if (cell != null) {
             cell.block = !cell.block;
         }
-        if (this.symmetrical) {
-            const opposite = this.cellAt(this.size - 1 - x, this.size - 1 - y);
+        if (this.settings.symmetrical) {
+            const opposite = this.cellAt(this.settings.size - 1 - x, this.settings.size - 1 - y);
             if (opposite != null) {
                 opposite.block = cell.block;
             }
@@ -57,7 +67,7 @@ export class BlockGrid extends Grid<BlockCell> {
         }
 
         var rx = c.x;
-        while (rx < this.size - 1) {
+        while (rx < this.settings.size - 1) {
             const cur = this.cellAt(rx + 1, c.y);
             if (cur.block)
                 break;
@@ -82,7 +92,7 @@ export class BlockGrid extends Grid<BlockCell> {
         }
 
         var rx = c.x;
-        while (rx < this.size - 1) {
+        while (rx < this.settings.size - 1) {
             const cur = this.cellAt(rx + 1, c.y);
             if (cur.block)
                 break;
@@ -100,7 +110,7 @@ export class BlockGrid extends Grid<BlockCell> {
             ty--;
         }
         var by = c.y;
-        while (by < this.size - 1) {
+        while (by < this.settings.size - 1) {
             const cur = this.cellAt(c.x, by + 1);
             if (cur.block)
                 break;
@@ -124,7 +134,7 @@ export class BlockGrid extends Grid<BlockCell> {
             ty--;
         }
         var by = c.y;
-        while (by < this.size - 1) {
+        while (by < this.settings.size - 1) {
             const cur = this.cellAt(c.x, by + 1);
             if (cur.block)
                 break;
@@ -135,6 +145,10 @@ export class BlockGrid extends Grid<BlockCell> {
 
     determineWordCount(c:BlockCell) : number {
         if (c.block) {
+            c.hcount = 0;
+            c.vcount = 0;
+            c.hlen = 0;
+            c.vlen = 0;
             return 0;
         }
 
@@ -193,5 +207,21 @@ export class BlockGrid extends Grid<BlockCell> {
         } else {
             super.scoreCell(c);
         }
+    }
+
+    serialize() : string {
+        // convert cells into format suitable for serialization
+        var list = [];
+        for (var i in this.cells) {
+            var cell = this.cells[i];
+            if (cell.block) {
+                list.push('#');
+            } else if (cell.letter) {
+                list.push(cell.letter);
+            } else {
+                list.push(' ');
+            }
+        }
+        return list.join('');
     }
 }
