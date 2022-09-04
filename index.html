@@ -24,6 +24,16 @@
 					<label for="ignore_single_space"><input id="ignore_single_space" type="checkbox" />Ignore 1-space entries?</label><br />
 					<input id="reset" type="button" value="Reset" />
 					<input id="rescore" type="button" value="Rescore" /><br />
+
+                    <label for="export">Export Grid</label><br />
+                    <a id="export_anchor" style="display:none"></a>
+					<button id="export">Export</button>
+
+                    <form id="import_form">
+                        <label>Import Grid</label>
+                        <input type="file" id="import_file" accept=".json">
+                        <button>Go</button>
+                    </form>
 				</div>
 				<div id="notes">
 					<h3>Notes</h3>

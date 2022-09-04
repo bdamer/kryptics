@@ -121,6 +121,39 @@ function resetState() {
     e.preventDefault();
     // not used
 });
+(<HTMLButtonElement>document.getElementById("export")).addEventListener('click', (e:MouseEvent) => {
+    const data = {
+        settings: grid.settings,
+        cells: grid.serialize()
+    };
+
+    var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
+    var dlAnchorElem = document.getElementById('export_anchor');
+    dlAnchorElem.setAttribute("href",     dataStr     );
+    dlAnchorElem.setAttribute("download", "xword_" + grid.settings.size + ".json");
+    dlAnchorElem.click();
+});
+
+(<HTMLFormElement>document.getElementById("import_form")).addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    var file = <HTMLInputElement>document.getElementById('import_file');
+
+    if (!file.value.length) return;
+
+    // Create a new FileReader() object
+	let reader = new FileReader();
+
+    reader.onload = function(ev:ProgressEvent<FileReader>) {
+        const data = JSON.parse(ev.target.result as string) as State;
+        //console.log("Loaded state: ", data);
+        createGrid(data.settings, data.cells);
+    }
+
+	// Read the file
+	reader.readAsText(file.files[0]);
+});
+
 (document).addEventListener('keydown', (e:KeyboardEvent) => {
 
     // console.log(e);
